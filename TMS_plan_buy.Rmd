@@ -1,0 +1,794 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+`
+
+##############################################  DASHBOARD VERSION ########################################
+
+
+
+```{r}
+## app.R ## 
+library(shinydashboard)
+library(rhandsontable)
+library(shinysky)
+library(DT)
+library(shiny)             # R webapps
+library(gentelellaShiny)   # ui theme
+library(googleAuthR)       # auth login
+
+library(googleLanguageR)   # talking
+library(dygraphs)          # plots 
+library(xts)               # time-series
+library(tableHTML)
+library(plotly)
+library(leaflet)
+
+
+library(wordcloud2)   
+library(tidytext)
+library(tidyverse)
+
+
+
+wordcloud2a <- function (data, size = 1, minSize = 0, gridSize = 0, fontFamily = "Segoe UI", 
+          fontWeight = "bold", color = "random-dark", backgroundColor = "white", 
+          minRotation = -pi/4, maxRotation = pi/4, shuffle = TRUE, 
+          rotateRatio = 0.4, shape = "circle", ellipticity = 0.65, 
+          widgetsize = NULL, figPath = NULL, hoverFunction = NULL) 
+{
+  if ("table" %in% class(data)) {
+    dataOut = data.frame(name = names(data), freq = as.vector(data))
+  }
+  else {
+    data = as.data.frame(data)
+    dataOut = data[, 1:2]
+    names(dataOut) = c("name", "freq")
+  }
+  if (!is.null(figPath)) {
+    if (!file.exists(figPath)) {
+      stop("cannot find fig in the figPath")
+    }
+    spPath = strsplit(figPath, "\\.")[[1]]
+    len = length(spPath)
+    figClass = spPath[len]
+    if (!figClass %in% c("jpeg", "jpg", "png", "bmp", "gif")) {
+      stop("file should be a jpeg, jpg, png, bmp or gif file!")
+    }
+    base64 = base64enc::base64encode(figPath)
+    base64 = paste0("data:image/", figClass, ";base64,", 
+                    base64)
+  }
+  else {
+    base64 = NULL
+  }
+  weightFactor = size * 180/max(dataOut$freq)
+  settings <- list(word = dataOut$name, freq = dataOut$freq, 
+                   fontFamily = fontFamily, fontWeight = fontWeight, color = color, 
+                   minSize = minSize, weightFactor = weightFactor, backgroundColor = backgroundColor, 
+                   gridSize = gridSize, minRotation = minRotation, maxRotation = maxRotation, 
+                   shuffle = shuffle, rotateRatio = rotateRatio, shape = shape, 
+                   ellipticity = ellipticity, figBase64 = base64, hover = htmlwidgets::JS(hoverFunction))
+  chart = htmlwidgets::createWidget("wordcloud2", settings, 
+                                    width = widgetsize[1], height = widgetsize[2], sizingPolicy = htmlwidgets::sizingPolicy(viewer.padding = 0, 
+                                                                                                                            browser.padding = 0, browser.fill = TRUE))
+  chart
+}
+
+
+
+
+
+
+
+
+
+###################################################################################################################################
+
+ui <- dashboardPage(
+  dashboardHeader(title = "TMS Plan & Buy"),
+  dashboardSidebar(
+    sidebarMenu(
+      menuItem("Outputs: Baseline Summaries", tabName = "account", icon = icon("check-square")),
+      menuItem("Inputs: Gen Ent Baseline", tabName = "users", icon = icon("th")),
+      menuItem("Inputs: Sponsorship Baseline", tabName = "browsing", icon = icon("check-square")),
+       menuItem("Outputs: Buy Summaries", tabName = "goals", icon = icon("th")),
+      menuItem("Input: Gen Ent Buy", tabName = "attribution", icon = icon("th")),
+      menuItem("Input: Sponsorship", tabName = "dealers", icon = icon("th")),
+       menuItem("Search Analytics", tabName = "searches", icon = icon("th")),
+       menuItem("Display Analytics", tabName = "display", icon = icon("th")),
+       menuItem("Lexus Model Key Metrics", tabName = "lexus", icon = icon("th")),
+       menuItem("Website Performance", tabName = "performance", icon = icon("th"))
+    )
+  ),
+  # change colours: https://stackoverflow.com/questions/52198452/how-to-change-the-background-color-of-the-shiny-dashboard-body
+  dashboardBody(tags$head(tags$style(HTML('
+        /* logo */
+        .skin-blue .main-header .logo {
+                              background-color: 		#808080;
+                              }
+
+        /* logo when hovered */
+        .skin-blue .main-header .logo:hover {
+                              background-color: 	#808080;
+                              }
+
+        /* navbar (rest of the header) */
+        .skin-blue .main-header .navbar {
+                              background-color: 	#808080;
+                              }        
+
+        /* main sidebar */
+        .skin-blue .main-sidebar {
+                              background-color: #8b0000;
+                              }
+
+        /* active selected tab in the sidebarmenu */
+        .skin-blue .main-sidebar .sidebar .sidebar-menu .active a{
+                              background-color: #8b0000;
+                              }
+
+        /* other links in the sidebarmenu */
+        .skin-blue .main-sidebar .sidebar .sidebar-menu a{
+                              background-color: #8b0000;
+                              color: #FFFFFF;
+                              }
+
+        /* other links in the sidebarmenu when hovered */
+         .skin-blue .main-sidebar .sidebar .sidebar-menu a:hover{
+                              background-color: #A9A9A9;
+                              }
+        /* toggle button when hovered  */                    
+         .skin-blue .main-header .navbar .sidebar-toggle:hover{
+                              background-color: #A9A9A9;
+                             }
+                              
+                               /* body */
+            .content-wrapper, .right-side {
+                                background-color: #FFFFFF;
+                               }
+                                
+                                .box-header h3.box-title {
+   font-weight: bold;
+   font-size: 14px;
+                                }
+                                
+                                .sidebar {
+                      height: 90vh; overflow-y: auto;
+                    }
+
+    
+                               
+                                 '))),
+
+
+
+    # Boxes need to be put in a row (or column)
+   tabItems(
+     
+
+      # First tab content
+      tabItem(tabName = "account", 
+              
+                   titlePanel(h3(id="big-heading", "Baseline Summaries",align = "center", style='background-color:grey;
+                     padding-left: 15px; color:white')),
+              
+              
+        fluidRow(
+          
+     
+         column(width = 2, wellPanel(h3(tags$strong("Campaign Details")),
+                  textInput("textID", "Client"), textInput("textID", "Campaign/Product"),
+                  textInput("textID", "Demography"), textInput("textID", "Plan No"),
+                  textInput("name", "Creative Agency"),
+                  dateRangeInput("dateID", "Campaign Timing", start = NULL, end = NULL, min = NULL,
+  max = NULL, format = "dd-mm-yyyy", startview = "month", weekstart = 0,
+  language = "en", separator = " to ", width = NULL))
+          ),
+  
+             column(width = 8,
+                  wellPanel(h5(tags$strong("Sydney")), (h6("Total Tarps Plan", tags$br(), DT::dataTableOutput("tbl2")  )),
+  ),
+  ),
+  
+  column(2, wellPanel(h5(tags$strong("Sydney Cost Of Tarps")),(h6("Total Tarps",  tableOutput('tbl5') )) )),
+  
+  
+        )
+        
+      ),
+
+
+
+
+
+      # Second tab content
+      tabItem(tabName = "users",
+              
+              titlePanel(h3(id="big-heading", "User Analysis: Type, Recency, Location",align = "center", style='background-color:grey;
+                     padding-left: 15px; color:white')),
+              
+       fluidRow(
+         
+                    column(8,
+                  wellPanel(h5(tags$strong("Sydney")), (h6( "General Entertainment Tarps", tags$br(), rHandsontableOutput("hotable2") )),
+  ),
+  ),
+
+  
+   column(2, wellPanel(h5(tags$strong("Sydney Cost Of Tarps")),(h6("Gen Ent Tarps",  tableOutput('tbl4') )) )),
+  
+      
+    ),
+    
+    
+    ),
+
+tabItem(tabName = "browsing",
+         titlePanel(h3(id="big-heading", "Website Browsing: Key Metrics",align = "center", style='background-color:grey;
+                     padding-left: 15px; color:white')),
+        
+        
+                  fluidRow(
+      
+       column(10, wellPanel(h5(tags$strong("Sydney")), (h6( "Sponsorship Tarps: Total")), tags$br(), rHandsontableOutput("hotable1") )),
+       
+       
+        column(2, wellPanel(h5(tags$strong("Sydney Cost Of Tarps")),(h6("Sponsorship Tarps",  tableOutput('tbl3') )) )),
+       
+      
+    ),
+    
+    
+    
+    
+    
+    
+    
+                      fluidRow(
+      
+      box(width = 4, title = "Unique Internal Site Searches",  h5(tags$strong("Ave No. Unique Internal Site Searches Per Day")), verbatimTextOutput("mean_site_search"), plotlyOutput("internal_search_plot1")),
+      
+      box(width = 4, title = "Average Search Duration (mins)", h5(tags$strong("Ave Site Search Duration Per Day")), verbatimTextOutput("mean_search_duration"), plotlyOutput("internal_search_plot2")),
+          
+      box(width = 4, title = "Average No. Pages Post Search", h5(tags$strong("Ave No. Pages Post Search Per Day")), verbatimTextOutput("mean_search_depth"),plotlyOutput("internal_search_plot3")),
+      
+    ),
+    
+               titlePanel(h3(id="big-heading", "Website Browsing: Bounce Rates",align = "center", style='background-color:grey;
+                     padding-left: 15px; color:white')),
+    
+    fluidRow(
+      
+      box(width = 6, title = "Bounces", h5(tags$strong("Average Number of Bounces")), verbatimTextOutput("mean_bounces"), plotlyOutput("bounce_plot1")),
+      
+      box(width = 6, title = "Bounce Rate", h5(tags$strong("Total Average Bounce Rate")), verbatimTextOutput("mean_bounce_rate"), plotlyOutput("bounce_plot2"))
+    ),
+  
+
+),
+
+
+      # Third tab content
+      tabItem(tabName = "goals",
+         titlePanel(h3(id="big-heading", "Performance Analysis: Goal Tracking",align = "center", style='background-color:grey;
+                     padding-left: 15px; color:white')),
+              
+       fluidRow(
+      # A static infoBox
+      box(width = 4, title = "Lexus Goal Completions: Total", plotlyOutput("goal_plot1")),
+      # Dynamic infoBoxes
+      box(width = 4, title = "Lexus Goal Completions Value: Total", plotlyOutput("goal_plot3")),
+      
+      box(width = 4, title = "Lexus Goal Conversion Rate: Total", plotlyOutput("goal_plot4")),
+       ),
+      
+             fluidRow(
+      # A static infoBox
+      box(width = 4, title = "Goal Completions: Corporate Brochure Request", plotlyOutput("lex_goal13_plot1")),
+      # Dynamic infoBoxes
+      box(width = 4, title = "Goal Value: Corporate Brochure Request", plotlyOutput("lex_goal13_plot2")),
+      
+      box(width = 4, title = "Goal Conversion Rate: Corporate Brochure Request", plotlyOutput("lex_goal13_plot3")),
+       ),
+      
+            
+            fluidRow(
+      # A static infoBox
+      box(width = 4, title = "Goal Completions: Finance Form Submission", plotlyOutput("lex_goal12_plot1")),
+      # Dynamic infoBoxes
+      box(width = 4, title = "Goal Value: Finance Form Submission" , plotlyOutput("lex_goal12_plot2")),
+      
+      box(width = 4, title = "Goal Conversion Rate: Finance Form Submission" , plotlyOutput("lex_goal12_plot3")),
+       ),
+      
+                  fluidRow(
+      # A static infoBox
+      box(width = 4, title = "Goal Completions:  Build & Price Completion", plotlyOutput("lex_goal9_plot1")),
+      # Dynamic infoBoxes
+      box(width = 4, title = "Goal Value:  Build & Price Completion" , plotlyOutput("lex_goal9_plot2")),
+      
+      box(width = 4, title = "Goal Conversion Rate:  Build & Price Completion" , plotlyOutput("lex_goal9_plot3")),
+       ),
+      
+      
+      
+      fluidRow(
+      # A static infoBox
+      box(width = 4, title = "Goal Completions: Find a dealer - All Clicks", plotlyOutput("lex_goal5_plot1")),
+      # Dynamic infoBoxes
+      box(width = 4, title = "Goal Value: Find a dealer - All Clicks", plotlyOutput("lex_goal5_plot2")),
+      
+      box(width = 4, title = "Goal Conversion Rate: Find a dealer - All Clicks", plotlyOutput("lex_goal5_plot3")),
+       ),
+      
+            fluidRow(
+      # A static infoBox
+      box(width = 4, title = "Goal Completions: Test Drive Booked", plotlyOutput("lex_goal1_plot1")),
+      # Dynamic infoBoxes
+      box(width = 4, title = "Goal Value: Test Drive Booked", plotlyOutput("lex_goal1_plot2")),
+      
+      box(width = 4, title = "Goal Conversion Rate: Test Drive Booked", plotlyOutput("lex_goal1_plot3")),
+       )
+      
+
+    
+      ),
+      
+      # Third tab content
+      tabItem(tabName = "attribution",
+         titlePanel(h3(id="big-heading", "Multi Touch Attribution",align = "center", style='background-color:grey;
+                     padding-left: 15px; color:white')),
+              
+       fluidRow(
+      # A static infoBox
+      box(width = 12, title = "Transition Probability Heat Map", plotlyOutput("attr_plot1"))
+       )
+      ),
+
+
+
+
+      # Third tab content
+      tabItem(tabName = "dealers",
+         titlePanel(h3(id="big-heading", "Performance Analysis: Dealer Goal Tracking",align = "center", style='background-color:grey;
+                     padding-left: 15px; color:white')),
+              
+       fluidRow(
+      # A static infoBox
+      box(width = 6, title = "Dealer Goal Completions: Total", plotlyOutput("dealer_plot1")),
+      # Dynamic infoBoxes
+      box(width = 6, title = "Dealer Goal Completions: By Day", plotlyOutput("dealer_plot2")),
+       ),
+      
+             fluidRow(
+      # A static infoBox
+      box(width = 6, title = "Dealer Goal Value: Total", plotlyOutput("dealer_plot3")),
+      # Dynamic infoBoxes
+      box(width = 6, title = "Dealer Goal Value: By Day", plotlyOutput("dealer_plot4")),
+       ),
+      
+                   fluidRow(
+      # A static infoBox
+      box(width = 6, title = "Dealer Goal Convrsion Rate: Total", plotlyOutput("dealer_plot5")),
+      # Dynamic infoBoxes
+      box(width = 6, title = "Dealer Goal Conversion Rate: By Day", plotlyOutput("dealer_plot6")),
+       )
+      
+      ),
+
+
+
+    tabItem(tabName = "searches",
+         titlePanel(h3(id="big-heading", "Search Key Metrics",align = "center", style='background-color:grey;
+                     padding-left: 15px; color:white')),
+         
+          fluidRow(
+          box(width=12, title = "Key Metrics", DT::dataTableOutput("adwords_table"))
+          
+        ),
+      
+      
+                  fluidRow(
+          
+          box(width = 4, title = "Ad Impressions", plotlyOutput("ad_search_plot1")),
+          
+          box(width = 4, title = "Ad Clicks", plotlyOutput("ad_search_plot2")),
+          
+          box(width = 4, title = "Click Through Rate", plotlyOutput("ad_search_plot3"))
+          
+          
+        ),
+        
+                          fluidRow(
+          
+          box(width = 4, title = "Cost Per Click", plotlyOutput("ad_search_plot4")),
+          
+          box(width = 4, title = "Cost Per Goal Conversion", plotlyOutput("ad_search_plot5")),
+          
+          box(width = 4, title = "Return on Ad Spend", plotlyOutput("ad_search_plot6"))
+          
+          
+        ),
+        
+        
+        
+         titlePanel(h3(id="big-heading", "Search Analysis",align = "center", style='background-color:grey;
+                     padding-left: 15px; color:white')),
+        
+        
+               fluidRow(
+      
+       box(width = 12, title = "Search Queries Triggering Impressions", wordcloud2Output("search_query_cloud")),
+      
+    ),
+      
+      
+          fluidRow(
+          
+          box(width = 4, title = "Key Word Search"),
+          
+          box(width = 4, title = "Ad Groups"),
+          
+          box(width = 4, title = "Ad To Search Match Type" )
+          
+          
+        ),
+      
+      
+      
+    ),
+
+
+        tabItem(tabName = "display",
+         titlePanel(h3(id="big-heading", "Display Campaign Performance",align = "center", style='background-color:grey;
+                     padding-left: 15px; color:white')),
+         
+         fluidRow(
+           
+                 box(width = 8, title = "Top Campaigns (Max 20)", plotlyOutput("campaign_plot1") ),
+          
+          
+          box(width = 4, title = "All Campaigns in Period", DT::dataTableOutput("campaign_table") )
+           
+         ),
+         
+                  fluidRow(
+
+          box(width = 12, title = "Floodlight Quantity By Date", plotlyOutput("floodlight_plot1")  ),
+           
+
+                   
+                           fluidRow(
+
+          box(width = 6, title = "Click Ad Type", plotlyOutput("floodlight_plot2")  ),
+          
+          box(width = 6, title = "Creative Type", plotlyOutput("floodlight_plot3")) ),
+          
+                    
+          
+          fluidRow(
+
+          box(width = 6, title = "Click Site", plotlyOutput("floodlight_plot4")  ),
+          
+          box(width = 6, title = "Floodlight Activity", plotlyOutput("floodlight_plot5"))  ),
+          
+          
+          
+          fluidRow(
+
+          box(width = 6, title = "Last Event Site Placement", plotlyOutput("floodlight_plot6")  ),
+          
+          box(width = 6, title = "Last Event Attribution Type", plotlyOutput("floodlight_plot7"))  )
+
+         
+
+           
+         )
+         
+
+           
+           
+         ),
+
+        tabItem(tabName = "performance",
+         titlePanel(h3(id="big-heading", "Website Performance",align = "center", style='background-color:grey;
+                     padding-left: 15px; color:white')),
+         
+         fluidRow(
+           
+           box(width = 6, title = "Average Page Load Time Per Day", plotlyOutput("speed_plot1")),
+           
+           box(width = 6, title = "Average Server Connection Time Per Day", plotlyOutput("browser_speed_plot1"))
+           
+           
+         ),
+         
+         
+         fluidRow(
+           
+           box(width = 6, title = "Average Server Response Time Per Day", plotlyOutput("speed_plot2")),
+           
+           box(width = 6, title = "Average Server Response Time By Browser", plotlyOutput("browser_speed_plot2"))
+           
+                  
+                  ),
+         
+         
+         fluidRow(
+           
+           box(width = 6, title = "Average Server Connection Time Per Day", plotlyOutput("speed_plot3")),
+           
+           box(width = 6, title = "Average Server Connection Time By Browser", plotlyOutput("browser_speed_plot3"))   
+                  
+                  
+                  
+                  
+                  )
+          
+          
+        ),
+
+
+
+
+
+
+
+
+
+      
+    )
+  ))
+```
+
+
+
+
+
+
+```{r}
+
+server <- shinyServer(function(input, output, session) {
+
+  # Initiate your table
+ previous <- reactive({DF})
+
+  MyChanges <- reactive({
+    if(is.null(input$hotable1)){return(previous())}
+    else if(!identical(previous(),input$hotable1)){
+      # hot.to.df function will convert your updated table into the dataframe
+      mytable <- as.data.frame(hot_to_r(input$hotable1))
+      
+
+      # here the second column is a function of the first and it will be multipled by 100 given the values in the first column
+      mytable <- mytable[1:numberofrows,]
+
+      # Add some test cases
+      mytable[,1][is.na(mytable[,1])] <- 1
+      mytable[,2][is.na(mytable[,2])] <- 1
+      mytable[,3][is.na(mytable[,3])] <- 1
+      mytable[,4][is.na(mytable[,4])] <- 1
+      mytable[,5][is.na(mytable[,5])] <- 1
+      mytable[,6][is.na(mytable[,6])] <- 1
+      mytable[,7][is.na(mytable[,7])] <- 1
+      mytable[,8][is.na(mytable[,8])] <- 1
+      
+      mytable[,53] <- mytable[,1]+mytable[,2]+mytable[,3]+mytable[,4]+mytable[,5]+mytable[,6]+mytable[,7]+mytable[,8]+mytable[,9]+mytable[,10]+mytable[,11]+mytable[,12]+mytable[,13]+mytable[,14]+mytable[,15]+mytable[,16]+mytable[,17]+mytable[,18]+mytable[,19]+mytable[,20]+mytable[,21]+mytable[,22]+mytable[,23]+mytable[,24]+mytable[,25]+mytable[,26]+mytable[,27]+mytable[,28]+mytable[,29]+mytable[,30]+mytable[,31]+mytable[,32]+mytable[,33]+mytable[,34]+mytable[,35]+mytable[,36]+mytable[,37]+mytable[,38]+mytable[,39]+mytable[,40]+mytable[,41]+mytable[,42]+mytable[,43]+mytable[,44]+mytable[,45]+mytable[,46]+mytable[,47]+mytable[,48]+mytable[,49]+mytable[,50]+mytable[,51]+mytable[,52]
+      
+      mytable[1,][is.na(mytable[1,])] <- 1
+      mytable[2,][is.na(mytable[2,])] <- 1
+      mytable[3,][is.na(mytable[3,])] <- 1
+      mytable[4,][is.na(mytable[4,])] <- 1
+      mytable[5,] <- mytable[1,]+mytable[2,]+ mytable[3,]+mytable[4,]
+      mytable
+    }
+  })
+  output$hotable1 <- renderRHandsontable({rhandsontable(MyChanges())%>%
+  hot_cols(renderer = "
+           function (instance, td, row, col, prop, value, cellProperties) {
+             Handsontable.renderers.TextRenderer.apply(this, arguments);
+if (value > 0) {
+              td.style.background = '	#D3D3D3';
+              
+             }
+           }",colnames(DF), format = "0a", colWidths = 35) })
+ 
+  
+  
+    MyChanges2 <- reactive({
+    if(is.null(input$hotable2)){return(previous())}
+    else if(!identical(previous(),input$hotable2)){
+      # hot.to.df function will convert your updated table into the dataframe
+      mytable <- as.data.frame(hot_to_r(input$hotable2))
+      
+
+      # here the second column is a function of the first and it will be multipled by 100 given the values in the first column
+      mytable <- mytable[1:numberofrows,]
+
+      # Add some test cases
+      mytable[,1][is.na(mytable[,1])] <- 1
+      mytable[,2][is.na(mytable[,2])] <- 1
+      mytable[,3][is.na(mytable[,3])] <- 1
+      mytable[,4][is.na(mytable[,4])] <- 1
+      mytable[,5][is.na(mytable[,5])] <- 1
+      mytable[,6][is.na(mytable[,6])] <- 1
+      mytable[,7][is.na(mytable[,7])] <- 1
+      mytable[,8][is.na(mytable[,8])] <- 1
+      
+      mytable[,53] <- mytable[,1]+mytable[,2]+mytable[,3]+mytable[,4]+mytable[,5]+mytable[,6]+mytable[,7]+mytable[,8]+mytable[,9]+mytable[,10]+mytable[,11]+mytable[,12]+mytable[,13]+mytable[,14]+mytable[,15]+mytable[,16]+mytable[,17]+mytable[,18]+mytable[,19]+mytable[,20]+mytable[,21]+mytable[,22]+mytable[,23]+mytable[,24]+mytable[,25]+mytable[,26]+mytable[,27]+mytable[,28]+mytable[,29]+mytable[,30]+mytable[,31]+mytable[,32]+mytable[,33]+mytable[,34]+mytable[,35]+mytable[,36]+mytable[,37]+mytable[,38]+mytable[,39]+mytable[,40]+mytable[,41]+mytable[,42]+mytable[,43]+mytable[,44]+mytable[,45]+mytable[,46]+mytable[,47]+mytable[,48]+mytable[,49]+mytable[,50]+mytable[,51]+mytable[,52]
+      
+      mytable[1,][is.na(mytable[1,])] <- 1
+      mytable[2,][is.na(mytable[2,])] <- 1
+      mytable[3,][is.na(mytable[3,])] <- 1
+      mytable[4,][is.na(mytable[4,])] <- 1
+      mytable[5,] <- mytable[1,]+mytable[2,]+ mytable[3,]+mytable[4,]
+      mytable
+    }
+  })
+  
+
+    
+    
+  
+    output$hotable2 <- renderRHandsontable({
+      
+      col_highlight <- unname(which(DF>0))
+      
+      rhandsontable(MyChanges2())%>%
+  hot_cols(renderer = "
+           function (instance, td, row, col, prop, value, cellProperties) {
+             Handsontable.renderers.TextRenderer.apply(this, arguments);
+if (value > 0) {
+              td.style.background = '#D3D3D3';
+              
+             }
+           }", colnames(DF), format = "0a", colWidths = 35) })
+  
+
+  ############################
+  
+  output$tbl1 = DT::renderDataTable( MyChanges(), extensions = c('Buttons', 'Scroller'), options=list(buttons = c('excel', 'pdf'),  dom = 'Bfrtip',
+                                        deferRender = TRUE,
+                                        scrollY = 150,
+                                        scroller = TRUE,  initComplete= JS(
+    "function(settings, json) {",
+    "$(this.api().table().header()).css({'background-color': '#8B0000', 'color': '#fff'});",
+    "}")),
+#add the fillContainer=T before or after options.
+    fillContainer = T,
+    class = "display"
+    
+   )
+    
+  
+    
+    
+  
+  
+  output$tbl2 = DT::renderDataTable({
+    
+    
+req(MyChanges())
+change = data.frame(MyChanges())
+                    
+req(MyChanges2())
+change2 = data.frame(MyChanges2())
+    
+tot = cbind(change[1], change[-1] + change2[-1])
+    
+    
+   datatable( tot, extensions = c('Buttons', 'Scroller'), options=list(buttons = c('excel', 'pdf'),  dom = 'Bfrtip',
+                                        deferRender = TRUE,
+                                        scrollY = 150,
+                                        scroller = TRUE,  initComplete= JS(
+    "function(settings, json) {",
+    "$(this.api().table().header()).css({'background-color': '#8B0000', 'color': '#fff'});",
+    "}")),
+#add the fillContainer=T before or after options.
+    fillContainer = T,
+    class = "display"
+    
+   )%>% formatStyle(colnames(tot)[1:ncol(tot)],
+ 
+  backgroundColor = styleInterval(c(0), c('white', '#D3D3D3'))
+)
+    
+    })
+  
+  
+  
+    
+
+    
+    
+    
+    
+ 
+                     
+library(DT)
+library(dplyr)
+                  
+    output$tbl3 = renderTable({
+      
+       req(MyChanges())
+change = data.frame(MyChanges() )
+
+change = subset(change, select = "Total.Tarps")
+
+change = change %>%
+  mutate(Tarps.Share = Total.Tarps/change$Total.Tarps[5])
+
+ change
+
+  })
+  
+
+    
+  library(DT)
+library(dplyr)
+                  
+    output$tbl4 = renderTable({
+      
+       req(MyChanges2())
+change = data.frame(MyChanges2() )
+
+change = subset(change, select = "Total.Tarps")
+
+change = change %>%
+  mutate(Tarps.Share = Total.Tarps/change$Total.Tarps[5])
+
+ change
+
+  })
+  
+    
+  library(DT)
+library(dplyr)
+    
+    
+                  
+    output$tbl5 = renderTable({
+      
+req(MyChanges())
+change = data.frame(MyChanges())
+                    
+req(MyChanges2())
+change2 = data.frame(MyChanges2())
+    
+tot = cbind(change[1], change[-1] + change2[-1])
+
+change = subset(tot, select = "Total.Tarps")
+
+change = change %>%
+  mutate(Tarps.Share = Total.Tarps/change$Total.Tarps[5])
+
+ change
+
+  })
+    
+
+})
+```
+
+```{r}
+shinyApp(ui = ui, server = server)
+```
+
+
+
