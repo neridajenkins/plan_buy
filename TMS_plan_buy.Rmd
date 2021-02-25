@@ -57,24 +57,32 @@ ui <- dashboardPage(
   dashboardHeader(title = "TMS Plan & Buy"),
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Budget Allocations", tabName = "budget", icon = icon("check-square")),
+      menuItem("Budget Allocations", tabName = "budget", icon = icon("check-square"), startExpanded = TRUE,
+        menuSubItem("Budget Tracker", tabName = "budget_tracker") ),
       
       menuItem("Baselines", icon = icon("check-square"), startExpanded = TRUE,
-        menuSubItem("Baseline Summaries", tabName = "account"),
-        menuSubItem("Inputs: Gen Ent Baseline", tabName = "users"),
-        menuSubItem("Inputs: Sponsorship Baseline", tabName = "browsing") ),
+        menuSubItem("Baseline Summary", tabName = "base_topline"),
+        menuSubItem("Gen Ent Baseline", tabName = "base_ge"),
+        menuSubItem("Sponsorship Baseline", tabName = "base_sponsor") ),
       
-       menuItem("Buy", tabName = "goals", icon = icon("check-square"), startExpanded = TRUE,
-        menuSubItem("Input: Gen Ent Buy", tabName = "attribution"),
-        menuSubItem("Input: Sponsorship", tabName = "dealers") ),
+       menuItem("Buy", tabName = "Buy", icon = icon("check-square"), startExpanded = TRUE,
+        menuSubItem("Buy Summary", tabName = "buy_topline"),
+        menuSubItem("Gen Ent Buy", tabName = "buy_ge"),
+        menuSubItem("Sponsorship Buy", tabName = "buy_sponsor") ),
       
       
-       menuItem("Post", tabName = "searches", icon = icon("check-square"), startExpanded = TRUE,
-        menuSubItem("TBC", tabName = "display"),
-       menuSubItem("TBCs", tabName = "lexus") ),
+       menuItem("Post", tabName = "post", icon = icon("check-square"), startExpanded = TRUE,
+        menuSubItem("Post Summary", tabName = "post_topline"),
+         menuSubItem("Gen Ent Post", tabName = "post_ge"),
+        menuSubItem("Sponsorship Post", tabName = "post_sponsor") ),
+      
+      
        menuItem("Finance", tabName = "performance", icon = icon("check-square"))
     )
   ),
+  
+  
+  
   # change colours: https://stackoverflow.com/questions/52198452/how-to-change-the-background-color-of-the-shiny-dashboard-body
   dashboardBody(tags$head(tags$style(HTML('
         /* logo */
@@ -134,17 +142,51 @@ ui <- dashboardPage(
     
                                
                                  '))),
+   
+   
+   
+   
+
+        tabItem(tabName = "budget",
+         titlePanel(h3(id="big-heading", "App Intro TBC",align = "center", style='background-color:grey;
+                     padding-left: 15px; color:white')),
+         
+              
+        
+                  fluidRow(
+      
+       column(12, wellPanel(h5(tags$strong("Sydney")), (h6( "App Intro TBC")) )),
+
+    ),
+
+),
 
 
+        tabItem(tabName = "budget_tracker",
+         titlePanel(h3(id="big-heading", "Budget Tracker TBC",align = "center", style='background-color:grey;
+                     padding-left: 15px; color:white')),
+         
+              
+        
+                  fluidRow(
+      
+       column(12, wellPanel(h5(tags$strong("Sydney")), (h6( "Budget Tracker")) )),
+
+    ),
+
+),
+
+
+   
 
     # Boxes need to be put in a row (or column)
    tabItems(
      
 
       # First tab content
-      tabItem(tabName = "account", 
+      tabItem(tabName = "base_topline", 
               
-                   titlePanel(h3(id="big-heading", "Baseline Summaries",align = "center", style='background-color:grey;
+                   titlePanel(h3(id="big-heading", "Budget Allocations",align = "center", style='background-color:grey;
                      padding-left: 15px; color:white')),
               
               
@@ -177,9 +219,9 @@ ui <- dashboardPage(
 
 
       # Second tab content
-      tabItem(tabName = "users",
+      tabItem(tabName = "base_ge",
               
-              titlePanel(h3(id="big-heading", "User Analysis: Type, Recency, Location",align = "center", style='background-color:grey;
+              titlePanel(h3(id="big-heading", "Baselines: General Entertainment",align = "center", style='background-color:grey;
                      padding-left: 15px; color:white')),
               
        fluidRow(
@@ -198,8 +240,8 @@ ui <- dashboardPage(
     
     ),
 
-tabItem(tabName = "browsing",
-         titlePanel(h3(id="big-heading", "Website Browsing: Key Metrics",align = "center", style='background-color:grey;
+tabItem(tabName = "base_sponsor",
+         titlePanel(h3(id="big-heading", "Baselines: Sponsorship Allocations",align = "center", style='background-color:grey;
                      padding-left: 15px; color:white')),
         
         
@@ -209,300 +251,120 @@ tabItem(tabName = "browsing",
        
        
         column(2, wellPanel(h5(tags$strong("Sydney Cost Of Tarps")),(h6("Sponsorship Tarps",  tableOutput('tbl3') )) )),
-       
-      
+
     ),
-    
-    
-    
-    
-    
-    
-    
-                      fluidRow(
-      
-      box(width = 4, title = "Unique Internal Site Searches",  h5(tags$strong("Ave No. Unique Internal Site Searches Per Day")), verbatimTextOutput("mean_site_search"), plotlyOutput("internal_search_plot1")),
-      
-      box(width = 4, title = "Average Search Duration (mins)", h5(tags$strong("Ave Site Search Duration Per Day")), verbatimTextOutput("mean_search_duration"), plotlyOutput("internal_search_plot2")),
-          
-      box(width = 4, title = "Average No. Pages Post Search", h5(tags$strong("Ave No. Pages Post Search Per Day")), verbatimTextOutput("mean_search_depth"),plotlyOutput("internal_search_plot3")),
-      
-    ),
-    
-               titlePanel(h3(id="big-heading", "Website Browsing: Bounce Rates",align = "center", style='background-color:grey;
-                     padding-left: 15px; color:white')),
-    
-    fluidRow(
-      
-      box(width = 6, title = "Bounces", h5(tags$strong("Average Number of Bounces")), verbatimTextOutput("mean_bounces"), plotlyOutput("bounce_plot1")),
-      
-      box(width = 6, title = "Bounce Rate", h5(tags$strong("Total Average Bounce Rate")), verbatimTextOutput("mean_bounce_rate"), plotlyOutput("bounce_plot2"))
-    ),
-  
 
 ),
 
 
       # Third tab content
-      tabItem(tabName = "goals",
-         titlePanel(h3(id="big-heading", "Performance Analysis: Goal Tracking",align = "center", style='background-color:grey;
+      tabItem(tabName = "buy_topline",
+         titlePanel(h3(id="big-heading", "Buy Summary",align = "center", style='background-color:grey;
                      padding-left: 15px; color:white')),
-              
-       fluidRow(
-      # A static infoBox
-      box(width = 4, title = "Lexus Goal Completions: Total", plotlyOutput("goal_plot1")),
-      # Dynamic infoBoxes
-      box(width = 4, title = "Lexus Goal Completions Value: Total", plotlyOutput("goal_plot3")),
-      
-      box(width = 4, title = "Lexus Goal Conversion Rate: Total", plotlyOutput("goal_plot4")),
-       ),
-      
-             fluidRow(
-      # A static infoBox
-      box(width = 4, title = "Goal Completions: Corporate Brochure Request", plotlyOutput("lex_goal13_plot1")),
-      # Dynamic infoBoxes
-      box(width = 4, title = "Goal Value: Corporate Brochure Request", plotlyOutput("lex_goal13_plot2")),
-      
-      box(width = 4, title = "Goal Conversion Rate: Corporate Brochure Request", plotlyOutput("lex_goal13_plot3")),
-       ),
-      
-            
-            fluidRow(
-      # A static infoBox
-      box(width = 4, title = "Goal Completions: Finance Form Submission", plotlyOutput("lex_goal12_plot1")),
-      # Dynamic infoBoxes
-      box(width = 4, title = "Goal Value: Finance Form Submission" , plotlyOutput("lex_goal12_plot2")),
-      
-      box(width = 4, title = "Goal Conversion Rate: Finance Form Submission" , plotlyOutput("lex_goal12_plot3")),
-       ),
-      
+             
+        
                   fluidRow(
-      # A static infoBox
-      box(width = 4, title = "Goal Completions:  Build & Price Completion", plotlyOutput("lex_goal9_plot1")),
-      # Dynamic infoBoxes
-      box(width = 4, title = "Goal Value:  Build & Price Completion" , plotlyOutput("lex_goal9_plot2")),
       
-      box(width = 4, title = "Goal Conversion Rate:  Build & Price Completion" , plotlyOutput("lex_goal9_plot3")),
-       ),
-      
-      
-      
-      fluidRow(
-      # A static infoBox
-      box(width = 4, title = "Goal Completions: Find a dealer - All Clicks", plotlyOutput("lex_goal5_plot1")),
-      # Dynamic infoBoxes
-      box(width = 4, title = "Goal Value: Find a dealer - All Clicks", plotlyOutput("lex_goal5_plot2")),
-      
-      box(width = 4, title = "Goal Conversion Rate: Find a dealer - All Clicks", plotlyOutput("lex_goal5_plot3")),
-       ),
-      
-            fluidRow(
-      # A static infoBox
-      box(width = 4, title = "Goal Completions: Test Drive Booked", plotlyOutput("lex_goal1_plot1")),
-      # Dynamic infoBoxes
-      box(width = 4, title = "Goal Value: Test Drive Booked", plotlyOutput("lex_goal1_plot2")),
-      
-      box(width = 4, title = "Goal Conversion Rate: Test Drive Booked", plotlyOutput("lex_goal1_plot3")),
-       )
-      
+       column(10, wellPanel(h5(tags$strong("Sydney")), (h6( "Total Buy: Total")), tags$br() )),
+       
+       
+        column(2, wellPanel(h5(tags$strong("Sydney Cost Of Tarps")),(h6("Total Buy Tarps" )) )),
 
-    
-      ),
+    ),
+
+),
       
       # Third tab content
-      tabItem(tabName = "attribution",
-         titlePanel(h3(id="big-heading", "Multi Touch Attribution",align = "center", style='background-color:grey;
+      tabItem(tabName = "buy_ge",
+         titlePanel(h3(id="big-heading", "General Entertainment Buy Summary",align = "center", style='background-color:grey;
                      padding-left: 15px; color:white')),
               
-       fluidRow(
-      # A static infoBox
-      box(width = 12, title = "Transition Probability Heat Map", plotlyOutput("attr_plot1"))
-       )
-      ),
+        
+                  fluidRow(
+      
+       column(10, wellPanel(h5(tags$strong("Sydney")), (h6( "General Entertainment Buy: Total")), tags$br() )),
+       
+       
+        column(2, wellPanel(h5(tags$strong("Sydney Cost Of Tarps")),(h6("General Entertainment Buy Tarps" )) )),
+
+    ),
+
+),
 
 
 
 
       # Third tab content
-      tabItem(tabName = "dealers",
-         titlePanel(h3(id="big-heading", "Performance Analysis: Dealer Goal Tracking",align = "center", style='background-color:grey;
+      tabItem(tabName = "buy_sponsor",
+         titlePanel(h3(id="big-heading", "Sponsorship Buy Detail",align = "center", style='background-color:grey;
                      padding-left: 15px; color:white')),
               
-       fluidRow(
-      # A static infoBox
-      box(width = 6, title = "Dealer Goal Completions: Total", plotlyOutput("dealer_plot1")),
-      # Dynamic infoBoxes
-      box(width = 6, title = "Dealer Goal Completions: By Day", plotlyOutput("dealer_plot2")),
-       ),
-      
-             fluidRow(
-      # A static infoBox
-      box(width = 6, title = "Dealer Goal Value: Total", plotlyOutput("dealer_plot3")),
-      # Dynamic infoBoxes
-      box(width = 6, title = "Dealer Goal Value: By Day", plotlyOutput("dealer_plot4")),
-       ),
-      
-                   fluidRow(
-      # A static infoBox
-      box(width = 6, title = "Dealer Goal Convrsion Rate: Total", plotlyOutput("dealer_plot5")),
-      # Dynamic infoBoxes
-      box(width = 6, title = "Dealer Goal Conversion Rate: By Day", plotlyOutput("dealer_plot6")),
-       )
-      
-      ),
-
-
-
-    tabItem(tabName = "searches",
-         titlePanel(h3(id="big-heading", "Search Key Metrics",align = "center", style='background-color:grey;
-                     padding-left: 15px; color:white')),
-         
-          fluidRow(
-          box(width=12, title = "Key Metrics", DT::dataTableOutput("adwords_table"))
-          
-        ),
-      
-      
+        
                   fluidRow(
-          
-          box(width = 4, title = "Ad Impressions", plotlyOutput("ad_search_plot1")),
-          
-          box(width = 4, title = "Ad Clicks", plotlyOutput("ad_search_plot2")),
-          
-          box(width = 4, title = "Click Through Rate", plotlyOutput("ad_search_plot3"))
-          
-          
-        ),
-        
-                          fluidRow(
-          
-          box(width = 4, title = "Cost Per Click", plotlyOutput("ad_search_plot4")),
-          
-          box(width = 4, title = "Cost Per Goal Conversion", plotlyOutput("ad_search_plot5")),
-          
-          box(width = 4, title = "Return on Ad Spend", plotlyOutput("ad_search_plot6"))
-          
-          
-        ),
-        
-        
-        
-         titlePanel(h3(id="big-heading", "Search Analysis",align = "center", style='background-color:grey;
+      
+       column(10, wellPanel(h5(tags$strong("Sydney")), (h6( "Sponsorship Buy: Total")), tags$br() )),
+       
+       
+        column(2, wellPanel(h5(tags$strong("Sydney Cost Of Tarps")),(h6("Sponsorship Buy Tarps" )) )),
+
+    ),
+
+),
+
+
+
+    tabItem(tabName = "post_topline",
+         titlePanel(h3(id="big-heading", "Total Post",align = "center", style='background-color:grey;
                      padding-left: 15px; color:white')),
+             
         
-        
-               fluidRow(
+                  fluidRow(
       
-       box(width = 12, title = "Search Queries Triggering Impressions", wordcloud2Output("search_query_cloud")),
-      
-    ),
-      
-      
-          fluidRow(
-          
-          box(width = 4, title = "Key Word Search"),
-          
-          box(width = 4, title = "Ad Groups"),
-          
-          box(width = 4, title = "Ad To Search Match Type" )
-          
-          
-        ),
-      
-      
-      
+       column(10, wellPanel(h5(tags$strong("Sydney")), (h6( "Total Post: Total")), tags$br() )),
+       
+       
+        column(2, wellPanel(h5(tags$strong("Sydney Cost Of Tarps")),(h6("Total Post Tarps" )) )),
+
     ),
 
+),
+   
 
-        tabItem(tabName = "display",
+        tabItem(tabName = "post_ge",
          titlePanel(h3(id="big-heading", "Display Campaign Performance",align = "center", style='background-color:grey;
                      padding-left: 15px; color:white')),
          
-         fluidRow(
-           
-                 box(width = 8, title = "Top Campaigns (Max 20)", plotlyOutput("campaign_plot1") ),
-          
-          
-          box(width = 4, title = "All Campaigns in Period", DT::dataTableOutput("campaign_table") )
-           
-         ),
-         
+              
+        
                   fluidRow(
+      
+       column(10, wellPanel(h5(tags$strong("Sydney")), (h6( "General Entertainment Post: Total")), tags$br() )),
+       
+       
+        column(2, wellPanel(h5(tags$strong("Sydney Cost Of Tarps")),(h6("General Entertainment Post Tarps" )) )),
 
-          box(width = 12, title = "Floodlight Quantity By Date", plotlyOutput("floodlight_plot1")  ),
-           
+    ),
 
-                   
-                           fluidRow(
+),
 
-          box(width = 6, title = "Click Ad Type", plotlyOutput("floodlight_plot2")  ),
-          
-          box(width = 6, title = "Creative Type", plotlyOutput("floodlight_plot3")) ),
-          
-                    
-          
-          fluidRow(
 
-          box(width = 6, title = "Click Site", plotlyOutput("floodlight_plot4")  ),
-          
-          box(width = 6, title = "Floodlight Activity", plotlyOutput("floodlight_plot5"))  ),
-          
-          
-          
-          fluidRow(
 
-          box(width = 6, title = "Last Event Site Placement", plotlyOutput("floodlight_plot6")  ),
-          
-          box(width = 6, title = "Last Event Attribution Type", plotlyOutput("floodlight_plot7"))  )
-
-         
-
-           
-         )
-         
-
-           
-           
-         ),
-
-        tabItem(tabName = "performance",
-         titlePanel(h3(id="big-heading", "Website Performance",align = "center", style='background-color:grey;
+        tabItem(tabName = "post_sponsor",
+         titlePanel(h3(id="big-heading", "Display Campaign Performance",align = "center", style='background-color:grey;
                      padding-left: 15px; color:white')),
          
-         fluidRow(
-           
-           box(width = 6, title = "Average Page Load Time Per Day", plotlyOutput("speed_plot1")),
-           
-           box(width = 6, title = "Average Server Connection Time Per Day", plotlyOutput("browser_speed_plot1"))
-           
-           
-         ),
-         
-         
-         fluidRow(
-           
-           box(width = 6, title = "Average Server Response Time Per Day", plotlyOutput("speed_plot2")),
-           
-           box(width = 6, title = "Average Server Response Time By Browser", plotlyOutput("browser_speed_plot2"))
-           
-                  
-                  ),
-         
-         
-         fluidRow(
-           
-           box(width = 6, title = "Average Server Connection Time Per Day", plotlyOutput("speed_plot3")),
-           
-           box(width = 6, title = "Average Server Connection Time By Browser", plotlyOutput("browser_speed_plot3"))   
-                  
-                  
-                  
-                  
-                  )
-          
-          
-        ),
+              
+        
+                  fluidRow(
+      
+       column(10, wellPanel(h5(tags$strong("Sydney")), (h6( "Sponsorship Post: Total")), tags$br() )),
+       
+       
+        column(2, wellPanel(h5(tags$strong("Sydney Cost Of Tarps")),(h6("Sponsorship Post Tarps" )) )),
 
+    ),
+
+),
 
 
 
