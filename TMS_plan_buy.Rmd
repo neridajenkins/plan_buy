@@ -46,53 +46,6 @@ library(tidyverse)
 
 
 
-wordcloud2a <- function (data, size = 1, minSize = 0, gridSize = 0, fontFamily = "Segoe UI", 
-          fontWeight = "bold", color = "random-dark", backgroundColor = "white", 
-          minRotation = -pi/4, maxRotation = pi/4, shuffle = TRUE, 
-          rotateRatio = 0.4, shape = "circle", ellipticity = 0.65, 
-          widgetsize = NULL, figPath = NULL, hoverFunction = NULL) 
-{
-  if ("table" %in% class(data)) {
-    dataOut = data.frame(name = names(data), freq = as.vector(data))
-  }
-  else {
-    data = as.data.frame(data)
-    dataOut = data[, 1:2]
-    names(dataOut) = c("name", "freq")
-  }
-  if (!is.null(figPath)) {
-    if (!file.exists(figPath)) {
-      stop("cannot find fig in the figPath")
-    }
-    spPath = strsplit(figPath, "\\.")[[1]]
-    len = length(spPath)
-    figClass = spPath[len]
-    if (!figClass %in% c("jpeg", "jpg", "png", "bmp", "gif")) {
-      stop("file should be a jpeg, jpg, png, bmp or gif file!")
-    }
-    base64 = base64enc::base64encode(figPath)
-    base64 = paste0("data:image/", figClass, ";base64,", 
-                    base64)
-  }
-  else {
-    base64 = NULL
-  }
-  weightFactor = size * 180/max(dataOut$freq)
-  settings <- list(word = dataOut$name, freq = dataOut$freq, 
-                   fontFamily = fontFamily, fontWeight = fontWeight, color = color, 
-                   minSize = minSize, weightFactor = weightFactor, backgroundColor = backgroundColor, 
-                   gridSize = gridSize, minRotation = minRotation, maxRotation = maxRotation, 
-                   shuffle = shuffle, rotateRatio = rotateRatio, shape = shape, 
-                   ellipticity = ellipticity, figBase64 = base64, hover = htmlwidgets::JS(hoverFunction))
-  chart = htmlwidgets::createWidget("wordcloud2", settings, 
-                                    width = widgetsize[1], height = widgetsize[2], sizingPolicy = htmlwidgets::sizingPolicy(viewer.padding = 0, 
-                                                                                                                            browser.padding = 0, browser.fill = TRUE))
-  chart
-}
-
-
-
-
 
 
 
@@ -104,16 +57,22 @@ ui <- dashboardPage(
   dashboardHeader(title = "TMS Plan & Buy"),
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Outputs: Baseline Summaries", tabName = "account", icon = icon("check-square")),
-      menuItem("Inputs: Gen Ent Baseline", tabName = "users", icon = icon("th")),
-      menuItem("Inputs: Sponsorship Baseline", tabName = "browsing", icon = icon("check-square")),
-       menuItem("Outputs: Buy Summaries", tabName = "goals", icon = icon("th")),
-      menuItem("Input: Gen Ent Buy", tabName = "attribution", icon = icon("th")),
-      menuItem("Input: Sponsorship", tabName = "dealers", icon = icon("th")),
-       menuItem("Search Analytics", tabName = "searches", icon = icon("th")),
-       menuItem("Display Analytics", tabName = "display", icon = icon("th")),
-       menuItem("Lexus Model Key Metrics", tabName = "lexus", icon = icon("th")),
-       menuItem("Website Performance", tabName = "performance", icon = icon("th"))
+      menuItem("Budget Allocations", tabName = "budget", icon = icon("check-square")),
+      
+      menuItem("Baselines", icon = icon("check-square"), startExpanded = TRUE,
+        menuSubItem("Baseline Summaries", tabName = "account"),
+        menuSubItem("Inputs: Gen Ent Baseline", tabName = "users"),
+        menuSubItem("Inputs: Sponsorship Baseline", tabName = "browsing") ),
+      
+       menuItem("Buy", tabName = "goals", icon = icon("check-square"), startExpanded = TRUE,
+        menuSubItem("Input: Gen Ent Buy", tabName = "attribution"),
+        menuSubItem("Input: Sponsorship", tabName = "dealers") ),
+      
+      
+       menuItem("Post", tabName = "searches", icon = icon("check-square"), startExpanded = TRUE,
+        menuSubItem("TBC", tabName = "display"),
+       menuSubItem("TBCs", tabName = "lexus") ),
+       menuItem("Finance", tabName = "performance", icon = icon("check-square"))
     )
   ),
   # change colours: https://stackoverflow.com/questions/52198452/how-to-change-the-background-color-of-the-shiny-dashboard-body
